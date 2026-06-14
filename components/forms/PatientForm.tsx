@@ -9,6 +9,7 @@ import { Form } from '@/components/ui/form';
 import SubmitButton from '../SubmitButton';
 import CustomFormField, { FormFieldType } from '../CustomFormField';
 import { createUser } from '@/lib/actions/patient.actions';
+import { useRouter } from 'next/navigation';
 
 const phoneRegex = /^\+?[0-9\s().-]{7,20}$/;
 
@@ -26,6 +27,7 @@ type PatientFormValues = z.infer<typeof formSchema>;
 
 function PatientForm() {
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const form = useForm<PatientFormValues>({
     resolver: zodResolver(formSchema),
@@ -42,8 +44,8 @@ function PatientForm() {
     try {
       const userData = { name, email, phone };
 
-      await createUser(userData);
-      // if (user) router.push(`/patients/${user.$id}/register`)
+      const user = await createUser(userData);
+      if (user) router.push(`/patients/${user.$id}/register`);
     } catch (error) {
       console.error('Error submitting form:', error);
     } finally {

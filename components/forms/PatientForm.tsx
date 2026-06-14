@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { Form } from '@/components/ui/form';
 import SubmitButton from '../SubmitButton';
 import CustomFormField, { FormFieldType } from '../CustomFormField';
+import { createUser } from '@/lib/actions/patient.actions';
 
 const phoneRegex = /^\+?[0-9\s().-]{7,20}$/;
 
@@ -41,12 +42,8 @@ function PatientForm() {
     try {
       const userData = { name, email, phone };
 
-      // Create user with Appwrite later.
-      // const user = await createUser(userData)
+      await createUser(userData);
       // if (user) router.push(`/patients/${user.$id}/register`)
-      console.log('Patient form submitted:', userData);
-
-      await new Promise((resolve) => setTimeout(resolve, 300));
     } catch (error) {
       console.error('Error submitting form:', error);
     } finally {

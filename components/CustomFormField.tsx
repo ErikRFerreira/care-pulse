@@ -142,6 +142,7 @@ function RenderInput<
               onChange={(date: Date | null) => field.onChange(date)}
               timeInputLabel="Time:"
               dateFormat={props.dateFormat ?? 'MM/dd/yyyy'}
+              placeholderText={props.placeholder}
               wrapperClassName="date-picker"
               disabled={props.disabled}
             />

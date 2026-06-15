@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import Image from 'next/image';
 import RegisterForm from '@/components/forms/RegisterForm';
 import { getUserById } from '@/lib/actions/patient.actions';
@@ -19,7 +18,7 @@ async function Register({ params }: Props) {
 
   return (
     <div className="flex h-screen max-h-screen justify-between">
-      <section className="remove-scrollbar container my-auto">
+      <section className="remove-scrollbar container">
         <div className="sub-container max-w-6xl">
           <h1>
             <Image
@@ -37,9 +36,6 @@ async function Register({ params }: Props) {
             <p className="justify-items-end text-dark-600 xl:text-left">
               © {new Date().getFullYear()} CarePulse. All rights reserved.
             </p>
-            <Link href="/?admin=true" className="text-green-500">
-              Admin
-            </Link>
           </div>
         </div>
       </section>

@@ -3,14 +3,18 @@ import Image from 'next/image';
 import RegisterForm from '@/components/forms/RegisterForm';
 import { getUserById } from '@/lib/actions/patient.actions';
 
+/**
+ * Since Next.jS 16,
+ * dynamic route params are now Promises that need to be awaited before use.
+ */
 type Props = {
-  params: {
+  params: Promise<{
     userId: string;
-  };
+  }>;
 };
 
 async function Register({ params }: Props) {
-  const { userId } = params;
+  const { userId } = await params;
   const user = await getUserById(userId);
 
   return (

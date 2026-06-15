@@ -45,6 +45,10 @@ interface CustomProps<
   iconAlt?: string;
   disabled?: boolean;
   dateFormat?: string;
+  showMonthDropdown?: boolean;
+  showYearDropdown?: boolean;
+  minDate?: Date;
+  maxDate?: Date;
   showTimeSelect?: boolean;
   children?: React.ReactNode;
   renderSkeleton?: (field: ControllerRenderProps<TFieldValues, TName>) => React.ReactNode;
@@ -118,6 +122,7 @@ function RenderInput<
               id={props.name}
               checked={field.value}
               onCheckedChange={field.onChange}
+              className="border-dark-500 data-checked:border-green-500 data-checked:bg-green-500"
             />
             <label htmlFor={props.name} className="checkbox-label">
               {props.label}
@@ -132,17 +137,24 @@ function RenderInput<
             src="/assets/icons/calendar.svg"
             height={24}
             width={24}
-            alt="user"
+            alt="calendar"
             className="ml-2"
           />
           <FormControl>
             <ReactDatePicker
               showTimeSelect={props.showTimeSelect ?? false}
+              showMonthDropdown={props.showMonthDropdown}
+              showYearDropdown={props.showYearDropdown}
+              dropdownMode="select"
+              minDate={props.minDate}
+              maxDate={props.maxDate}
               selected={(field.value as Date | null) ?? null}
               onChange={(date: Date | null) => field.onChange(date)}
               timeInputLabel="Time:"
               dateFormat={props.dateFormat ?? 'MM/dd/yyyy'}
+              placeholderText={props.placeholder}
               wrapperClassName="date-picker"
+              className="date-picker-input"
               disabled={props.disabled}
             />
           </FormControl>

@@ -3,34 +3,23 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { z } from 'zod';
 
 import { Form } from '@/components/ui/form';
 import SubmitButton from '../SubmitButton';
 import CustomFormField, { FormFieldType } from '../CustomFormField';
 import { createUser } from '@/lib/actions/patient.actions';
 import { useRouter } from 'next/navigation';
-
-const phoneRegex = /^\+?[0-9\s().-]{7,20}$/;
-
-const formSchema = z.object({
-  name: z.string().trim().min(2, 'Name must be at least 2 characters long.'),
-  email: z.string().trim().email('Enter a valid email address.'),
-  phone: z
-    .string()
-    .trim()
-    .min(1, 'Phone number is required.')
-    .regex(phoneRegex, 'Enter a valid phone number.'),
-});
-
-type PatientFormValues = z.infer<typeof formSchema>;
+import {
+  patientFormSchema,
+  type PatientFormValues,
+} from '@/lib/validation/patient.schemas';
 
 function PatientForm() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const form = useForm<PatientFormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(patientFormSchema),
     defaultValues: {
       name: '',
       email: '',

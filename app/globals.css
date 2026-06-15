@@ -356,6 +356,29 @@
   color: #ffffff;
 }
 
+.react-datepicker__header__dropdown {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding-top: 8px;
+}
+
+.react-datepicker__month-select,
+.react-datepicker__year-select {
+  height: 32px;
+  border: 1px solid #363a3d;
+  border-radius: 6px;
+  background-color: #131619;
+  color: #e8e9e9;
+  padding: 0 8px;
+  outline: none;
+}
+
+.react-datepicker__month-select:focus,
+.react-datepicker__year-select:focus {
+  border-color: #24ae7c;
+}
+
 .react-datepicker__triangle {
   fill: #1a1d21;
   color: #1a1d21;

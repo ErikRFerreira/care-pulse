@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import RegisterForm from '@/components/forms/RegisterForm';
 import { getUserById } from '@/lib/actions/patient.actions';
+import { notFound } from 'next/navigation';
 
 /**
  * Since Next.jS 16,
@@ -15,6 +16,10 @@ type Props = {
 async function Register({ params }: Props) {
   const { userId } = await params;
   const user = await getUserById(userId);
+
+  if (!user) {
+    notFound();
+  }
 
   return (
     <div className="flex h-screen max-h-screen justify-between">
@@ -32,7 +37,7 @@ async function Register({ params }: Props) {
 
           <RegisterForm user={user} />
 
-          <div className="text-14-regular mt-20 flex justify-between">
+          <div className="text-14-regular mt-20 flex justify-between pb-10">
             <p className="justify-items-end text-dark-600 xl:text-left">
               © {new Date().getFullYear()} CarePulse. All rights reserved.
             </p>

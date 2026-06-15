@@ -1,12 +1,14 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { ImageIcon, X } from 'lucide-react';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import CustomFormField, { FormFieldType } from '@/components/CustomFormField';
 import SubmitButton from '@/components/SubmitButton';
+import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { SelectGroup, SelectItem } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
@@ -16,6 +18,8 @@ import {
   type RegisterFormValues,
 } from '@/lib/validation/patient.schemas';
 import type { User } from '@/types';
+import { useRouter } from 'next/navigation';
+import { registerPatient } from '@/lib/actions/patient.actions';
 
 const DOCTORS = [
   {
@@ -45,12 +49,26 @@ const IDENTIFICATION_TYPES = [
   'Student ID Card',
 ];
 
+const BIRTH_DATE_MIN = new Date(1900, 0, 1);
+const BIRTH_DATE_MAX = new Date();
+
 type Props = {
-  user: User | null;
+  user: User;
 };
 
 function RegisterForm({ user }: Props) {
   const [isLoading, setIsLoading] = useState(false);
+  const [identificationFile, setIdentificationFile] = useState<File | null>(
+    null,
+  );
+  const identificationInputId = useId();
+  const identificationInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+  const identificationPreviewUrl = useMemo(() => {
+    if (!identificationFile?.type.startsWith('image/')) return null;
+
+    return URL.createObjectURL(identificationFile);
+  }, [identificationFile]);
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerFormSchema),
@@ -84,12 +102,45 @@ function RegisterForm({ user }: Props) {
   const onSubmit = async (values: RegisterFormValues) => {
     setIsLoading(true);
 
+    let formData;
+
+    // Handle file input for identification document
+    const identificationDocument = values.identificationDocument?.get(
+      'identificationDocument',
+    );
+
+    // If the identification document is a File, convert it to a Blob and append it to FormData
+    if (identificationDocument instanceof File) {
+      const blobfile = new Blob([identificationDocument], {
+        type: identificationDocument.type,
+      });
+
+      formData = new FormData();
+      formData.append('blob', blobfile);
+      formData.append('name', identificationDocument.name);
+    }
+
     try {
-      console.log('Validated registration form values:', values);
+      // Send to Appwrite
+      const patiendData = {
+        ...values,
+        userId: user.$id,
+        birthDate: values.birthDate!,
+        identificationDocument: formData,
+      };
+
+      const patient = await registerPatient(patiendData);
+      if (patient) router.push(`/patients/${user.$id}/new-appointment`);
     } finally {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!identificationPreviewUrl) return;
+
+    return () => URL.revokeObjectURL(identificationPreviewUrl);
+  }, [identificationPreviewUrl]);
 
   return (
     <Form {...form}>
@@ -140,6 +191,10 @@ function RegisterForm({ user }: Props) {
               label="Date of birth"
               placeholder="Select your birth date"
               dateFormat="dd/MM/yyyy"
+              showMonthDropdown
+              showYearDropdown
+              minDate={BIRTH_DATE_MIN}
+              maxDate={BIRTH_DATE_MAX}
             />
 
             <CustomFormField
@@ -333,36 +388,103 @@ function RegisterForm({ user }: Props) {
             control={form.control}
             name="identificationDocument"
             label="Scanned Copy of Identification Document"
-            renderSkeleton={(field) => (
-              <label className="file-upload">
-                <input
-                  type="file"
-                  className="hidden"
-                  accept="image/svg+xml,image/png,image/jpeg,image/gif"
-                  onChange={(event) => {
-                    const file = event.target.files?.[0];
-                    if (!file) return;
+            renderSkeleton={(field) => {
+              const clearIdentificationDocument = () => {
+                setIdentificationFile(null);
+                field.onChange(undefined);
 
-                    const formData = new FormData();
-                    formData.append('identificationDocument', file);
-                    field.onChange(formData);
-                  }}
-                />
-                <Image
-                  src="/assets/icons/upload.svg"
-                  alt="upload"
-                  width={40}
-                  height={40}
-                />
-                <div className="file-upload_label">
-                  <p>
-                    <span className="text-green-500">Click to upload</span> or
-                    drag and drop
-                  </p>
-                  <p>SVG, PNG, JPG or GIF (max. 800x400px)</p>
+                if (identificationInputRef.current) {
+                  identificationInputRef.current.value = '';
+                }
+              };
+
+              return (
+                <div className="file-upload">
+                  <input
+                    ref={identificationInputRef}
+                    id={identificationInputId}
+                    type="file"
+                    className="hidden"
+                    accept="image/svg+xml,image/png,image/jpeg,image/gif"
+                    multiple={false}
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (!file) return;
+
+                      const formData = new FormData();
+                      formData.append('identificationDocument', file);
+                      field.onChange(formData);
+                      setIdentificationFile(file);
+                    }}
+                  />
+
+                  <label
+                    htmlFor={identificationInputId}
+                    className="flex w-full cursor-pointer flex-col items-center justify-center gap-3"
+                  >
+                    {identificationPreviewUrl ? (
+                      <Image
+                        src={identificationPreviewUrl}
+                        alt={identificationFile?.name ?? 'Identification file'}
+                        width={320}
+                        height={160}
+                        unoptimized
+                        className="max-h-40 w-full rounded-md object-contain"
+                      />
+                    ) : identificationFile ? (
+                      <div className="flex size-20 items-center justify-center rounded-md border border-dark-500 bg-dark-300">
+                        <ImageIcon className="size-8 text-dark-600" />
+                      </div>
+                    ) : (
+                      <Image
+                        src="/assets/icons/upload.svg"
+                        alt="upload"
+                        width={40}
+                        height={40}
+                      />
+                    )}
+
+                    <div className="file-upload_label">
+                      {identificationFile ? (
+                        <>
+                          <p className="max-w-full truncate text-light-200">
+                            {identificationFile.name}
+                          </p>
+                          <p>
+                            <span className="text-green-500">
+                              Click to replace
+                            </span>
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p>
+                            <span className="text-green-500">
+                              Click to upload
+                            </span>{' '}
+                            or drag and drop
+                          </p>
+                          <p>SVG, PNG, JPG or GIF (max. 800x400px)</p>
+                        </>
+                      )}
+                    </div>
+                  </label>
+
+                  {identificationFile && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-500 hover:text-red-500"
+                      onClick={clearIdentificationDocument}
+                    >
+                      <X data-icon="inline-start" />
+                      Remove
+                    </Button>
+                  )}
                 </div>
-              </label>
-            )}
+              );
+            }}
           />
         </section>
 

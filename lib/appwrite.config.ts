@@ -1,9 +1,9 @@
 import {
   Client,
-  Databases,
   Storage,
   Functions,
   Messaging,
+  TablesDB,
   Users,
 } from 'node-appwrite';
 
@@ -18,7 +18,7 @@ export const {
 const client = new Client();
 client.setEndpoint(ENDPOINT!).setProject(PROJECT_ID!).setKey(API_KEY!);
 
-export const databases = new Databases(client);
+export const tablesDB = new TablesDB(client);
 export const storage = new Storage(client);
 export const functions = new Functions(client);
 export const messaging = new Messaging(client);

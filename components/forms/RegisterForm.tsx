@@ -93,14 +93,16 @@ function RegisterForm({ user }: Props) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-1 flex-col gap-12">
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="flex flex-1 flex-col gap-4"
+      >
         <section className="flex flex-col gap-4">
-          <h2 className="header">Welcome 👋</h2>
           <p className="text-dark-700">Let us know more about yourself</p>
         </section>
 
         <section className="flex flex-col gap-6">
-          <h3 className="sub-header">Personal Information</h3>
+          <h3 className="sub-header text-dark-700">Personal Information</h3>
 
           <CustomFormField
             fieldType={FormFieldType.INPUT}
@@ -215,7 +217,7 @@ function RegisterForm({ user }: Props) {
         </section>
 
         <section className="flex flex-col gap-6">
-          <h3 className="sub-header">Medical Information</h3>
+          <h3 className="sub-header text-dark-700">Medical Information</h3>
 
           <CustomFormField
             fieldType={FormFieldType.SELECT}
@@ -298,7 +300,9 @@ function RegisterForm({ user }: Props) {
         </section>
 
         <section className="flex flex-col gap-6">
-          <h3 className="sub-header">Identification and Verification</h3>
+          <h3 className="sub-header text-dark-700">
+            Identification and Verification
+          </h3>
 
           <CustomFormField
             fieldType={FormFieldType.SELECT}
@@ -363,7 +367,7 @@ function RegisterForm({ user }: Props) {
         </section>
 
         <section className="flex flex-col gap-6">
-          <h3 className="sub-header">Consent and Privacy</h3>
+          <h3 className="sub-header text-dark-700">Consent and Privacy</h3>
 
           <div className="flex flex-col gap-4">
             <CustomFormField

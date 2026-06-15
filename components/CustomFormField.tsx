@@ -118,6 +118,7 @@ function RenderInput<
               id={props.name}
               checked={field.value}
               onCheckedChange={field.onChange}
+              className="border-dark-500 data-checked:border-green-500 data-checked:bg-green-500"
             />
             <label htmlFor={props.name} className="checkbox-label">
               {props.label}
@@ -144,6 +145,7 @@ function RenderInput<
               dateFormat={props.dateFormat ?? 'MM/dd/yyyy'}
               placeholderText={props.placeholder}
               wrapperClassName="date-picker"
+              className="date-picker-input"
               disabled={props.disabled}
             />
           </FormControl>

@@ -52,9 +52,8 @@ export const createUser = async (user: CreateUserParams) => {
  */
 export const getUserById = async (userId: string) => {
   try {
-    const user = await users.get({ userId });
-
-    return parseStringify(user);
+    //const user = await users.get({ userId: userId });
+    //return parseStringify(user);
   } catch (error: unknown) {
     console.log('Error fetching user by ID:', error);
     if (error instanceof AppwriteException && error.code === 404) {

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Plus_Jakarta_Sans } from 'next/font/google';
 import { ThemeProvider } from '@/components/theme/theme-provider';
+import 'react-datepicker/dist/react-datepicker.css';
 import './globals.css';
 
 const plusJakartaSans = Plus_Jakarta_Sans({

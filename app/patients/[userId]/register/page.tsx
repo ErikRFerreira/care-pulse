@@ -14,9 +14,9 @@ async function Register({ params }: Props) {
   const user = await getUserById(userId);
 
   return (
-    <div className="flex h-screen max-h-screen">
+    <div className="flex h-screen max-h-screen justify-between">
       <section className="remove-scrollbar container my-auto">
-        <div className="sub-container max-w-124">
+        <div className="sub-container max-w-6xl">
           <h1>
             <Image
               src="/assets/icons/logo-full.svg"

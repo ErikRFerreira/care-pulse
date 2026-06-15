@@ -1,12 +1,20 @@
-import PatientForm from '@/components/forms/PatientForm';
 import Link from 'next/link';
 import Image from 'next/image';
+import RegisterForm from '@/components/forms/RegisterForm';
+import { getUserById } from '@/lib/actions/patient.actions';
 
-export default function Home() {
+type Props = {
+  params: {
+    userId: string;
+  };
+};
+
+async function Register({ params }: Props) {
+  const { userId } = params;
+  const user = await getUserById(userId);
+
   return (
     <div className="flex h-screen max-h-screen">
-      {/*  TODO: OTP verification */}
-
       <section className="remove-scrollbar container my-auto">
         <div className="sub-container max-w-124">
           <h1>
@@ -18,7 +26,8 @@ export default function Home() {
               className="mb-12 h-10 w-fit"
             />
           </h1>
-          <PatientForm />
+
+          <RegisterForm user={user} />
 
           <div className="text-14-regular mt-20 flex justify-between">
             <p className="justify-items-end text-dark-600 xl:text-left">
@@ -32,12 +41,14 @@ export default function Home() {
       </section>
 
       <Image
-        src="/assets/images/onboarding-img.png"
+        src="/assets/images/register-img.png"
         height={1000}
         width={1000}
-        alt="Onboarding Image"
-        className="side-img max-w-[50%]"
+        alt="Patient"
+        className="side-img max-w-97.5"
       />
     </div>
   );
 }
+
+export default Register;

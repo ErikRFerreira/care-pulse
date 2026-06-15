@@ -4,18 +4,18 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import Image from 'next/image';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { z } from 'zod';
 
 import CustomFormField, { FormFieldType } from '@/components/CustomFormField';
 import SubmitButton from '@/components/SubmitButton';
 import { Form } from '@/components/ui/form';
 import { SelectGroup, SelectItem } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import {
+  GENDER_OPTIONS,
+  registerFormSchema,
+  type RegisterFormValues,
+} from '@/lib/validation/patient.schemas';
 import type { User } from '@/types';
-
-const phoneRegex = /^\+?[0-9\s().-]{7,20}$/;
-
-const GENDER_OPTIONS = ['Male', 'Female', 'Other'] as const;
 
 const DOCTORS = [
   {
@@ -45,63 +45,6 @@ const IDENTIFICATION_TYPES = [
   'Student ID Card',
 ];
 
-const requiredString = (message: string) =>
-  z.string().trim().min(1, message).max(100, 'Must be 100 characters or less.');
-
-const optionalString = z
-  .string()
-  .trim()
-  .max(100, 'Must be 100 characters or less.')
-  .optional();
-
-const consentSchema = (message: string) =>
-  z.boolean().refine((value) => value, message);
-
-const formSchema = z.object({
-  userId: requiredString('User ID is required.'),
-  name: z
-    .string()
-    .trim()
-    .min(2, 'Name must be at least 2 characters long.')
-    .max(100, 'Name must be 100 characters or less.'),
-  email: z
-    .string()
-    .trim()
-    .email('Enter a valid email address.')
-    .max(100, 'Email must be 100 characters or less.'),
-  phone: requiredString('Phone number is required.').regex(
-    phoneRegex,
-    'Enter a valid phone number.',
-  ),
-  birthDate: z.date({
-    error: 'Date of birth is required.',
-  }),
-  gender: z.enum(GENDER_OPTIONS, {
-    error: 'Gender is required.',
-  }),
-  address: requiredString('Address is required.'),
-  occupation: requiredString('Occupation is required.'),
-  emergencyContactName: requiredString('Emergency contact name is required.'),
-  emergencyContactNumber: requiredString(
-    'Emergency phone number is required.',
-  ).regex(phoneRegex, 'Enter a valid emergency phone number.'),
-  primaryPhysician: requiredString('Primary care physician is required.'),
-  insuranceProvider: requiredString('Insurance provider is required.'),
-  insurancePolicyNumber: requiredString('Insurance policy number is required.'),
-  allergies: optionalString,
-  currentMedication: optionalString,
-  familyMedicalHistory: optionalString,
-  pastMedicalHistory: optionalString,
-  identificationType: optionalString,
-  identificationNumber: optionalString,
-  identificationDocument: z.instanceof(FormData).optional(),
-  treatmentConsent: consentSchema('Treatment consent is required.'),
-  disclosureConsent: consentSchema('Disclosure consent is required.'),
-  privacyConsent: consentSchema('Privacy consent is required.'),
-});
-
-type RegisterFormValues = z.infer<typeof formSchema>;
-
 type Props = {
   user: User | null;
 };
@@ -110,7 +53,7 @@ function RegisterForm({ user }: Props) {
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<RegisterFormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(registerFormSchema),
     defaultValues: {
       userId: user?.$id ?? '',
       name: user?.name ?? '',

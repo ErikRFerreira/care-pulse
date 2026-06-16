@@ -60,6 +60,12 @@ const parsePatientForAppointment = (patient: PatientRow) => ({
 const getAppointmentPatientId = (patient: AppointmentRow['patient']) =>
   typeof patient === 'string' ? patient : patient.$id;
 
+const getAppointmentUserId = (appointment: AppointmentRow) =>
+  appointment.userId ??
+  (typeof appointment.patient === 'string'
+    ? undefined
+    : appointment.patient.userId);
+
 /**
  * Creates a new appointment in the Appwrite database with the provided appointment details.
  *
@@ -71,7 +77,7 @@ const getAppointmentPatientId = (patient: AppointmentRow['patient']) =>
  */
 const parseAppointmentForForm = (appointment: AppointmentRow) => ({
   $id: appointment.$id,
-  userId: appointment.userId,
+  userId: getAppointmentUserId(appointment),
   patientId: getAppointmentPatientId(appointment.patient),
   primaryPhysician: appointment.primaryPhysician,
   reason: appointment.reason,

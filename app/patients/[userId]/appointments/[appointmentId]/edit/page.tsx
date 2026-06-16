@@ -26,7 +26,7 @@ async function EditAppointment({ params }: Props) {
     !user ||
     !patient ||
     !appointment ||
-    appointment.userId !== user.$id ||
+    (appointment.userId && appointment.userId !== user.$id) ||
     appointment.patientId !== patient.$id
   ) {
     notFound();

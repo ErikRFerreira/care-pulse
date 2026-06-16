@@ -9,6 +9,10 @@ import {
   updateAppointment,
 } from '@/lib/actions/appointment.actions';
 
+const navigationMocks = vi.hoisted(() => ({
+  push: vi.fn(),
+}));
+
 vi.mock('next/image', () => ({
   default: ({
     alt,
@@ -17,6 +21,12 @@ vi.mock('next/image', () => ({
     // eslint-disable-next-line @next/next/no-img-element
     <img alt={alt ?? ''} {...props} />
   ),
+}));
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: navigationMocks.push,
+  }),
 }));
 
 vi.mock('@/lib/actions/appointment.actions', () => ({
@@ -37,6 +47,7 @@ describe('AppointmentForm', () => {
   beforeEach(() => {
     createAppointmentMock.mockReset();
     updateAppointmentMock.mockReset();
+    navigationMocks.push.mockClear();
   });
 
   it('renders appointment fields and submit control', () => {
@@ -115,9 +126,11 @@ describe('AppointmentForm', () => {
       }),
     );
     expect(createAppointmentMock.mock.calls[0][0].schedule).toBeInstanceOf(Date);
-    expect(
-      await screen.findByText(/appointment request submitted/i),
-    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(navigationMocks.push).toHaveBeenCalledWith(
+        '/patients/user-123/appointments/appointment-789/success?action=created',
+      );
+    });
   });
 
   it('renders update mode with existing appointment values', () => {
@@ -192,6 +205,7 @@ describe('AppointmentForm', () => {
       expect.objectContaining({
         appointmentId: 'appointment-789',
         userId: defaultProps.userId,
+        patientId: defaultProps.patientId,
         primaryPhysician: defaultProps.primaryPhysician,
         reason: 'Updated reason',
         note: 'Updated note',
@@ -201,8 +215,8 @@ describe('AppointmentForm', () => {
       'status',
     );
     expect(updateAppointmentMock.mock.calls[0][0].schedule).toBeInstanceOf(Date);
-    expect(
-      await screen.findByText(/appointment request updated/i),
-    ).toBeInTheDocument();
+    expect(navigationMocks.push).toHaveBeenCalledWith(
+      '/patients/user-123/appointments/appointment-789/success?action=updated',
+    );
   });
 });

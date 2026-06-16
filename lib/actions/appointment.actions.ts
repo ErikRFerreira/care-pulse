@@ -7,6 +7,12 @@ import { APPWRITE_DATABASE_ID, tablesDB } from '../appwrite.config';
 import { parseStringify } from '../utils';
 import { AppointmentRow } from '@/types/appointment.types';
 
+const getAppointmentUserId = (appointment: AppointmentRow) =>
+  appointment.userId ??
+  (typeof appointment.patient === 'string'
+    ? undefined
+    : appointment.patient.userId);
+
 /**
  * Creates a new appointment row in the database.
  *
@@ -23,7 +29,6 @@ export const createAppointment = async (
       tableId: 'appointment',
       rowId: ID.unique(),
       data: {
-        userId: appointment.userId,
         patient: appointment.patient,
         primaryPhysician: appointment.primaryPhysician,
         reason: appointment.reason,
@@ -50,6 +55,7 @@ export const createAppointment = async (
 export const updateAppointment = async ({
   appointmentId,
   userId,
+  patientId,
   primaryPhysician,
   reason,
   schedule,
@@ -61,8 +67,16 @@ export const updateAppointment = async ({
       tableId: 'appointment',
       rowId: appointmentId,
     });
+    const appointmentPatientId =
+      typeof existingAppointment.patient === 'string'
+        ? existingAppointment.patient
+        : existingAppointment.patient.$id;
+    const appointmentUserId = getAppointmentUserId(existingAppointment);
 
-    if (existingAppointment.userId !== userId) {
+    if (
+      appointmentPatientId !== patientId ||
+      (appointmentUserId && appointmentUserId !== userId)
+    ) {
       return null;
     }
 

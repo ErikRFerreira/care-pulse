@@ -4,6 +4,8 @@ import type {
   CreateAppointmentParams,
   CreateUserParams,
   RegisterUserParams,
+  Status,
+  UpdateAppointmentParams,
 } from '@/types';
 import { AppwriteException, ID, Query, type Models } from 'node-appwrite';
 import {
@@ -29,11 +31,38 @@ type PatientRow = Models.Row & {
   primaryPhysician?: string;
 };
 
+type AppointmentRow = Models.Row & {
+  userId: string;
+  patient: string | PatientRow;
+  primaryPhysician: string;
+  reason: string;
+  schedule: string | Date;
+  status: Status;
+  note?: string;
+};
+
 const parsePatientForAppointment = (patient: PatientRow) => ({
   $id: patient.$id,
   userId: patient.userId,
   primaryPhysician:
     patient.primary_physician ?? patient.primaryPhysician ?? '',
+});
+
+const getAppointmentPatientId = (patient: AppointmentRow['patient']) =>
+  typeof patient === 'string' ? patient : patient.$id;
+
+const parseAppointmentForForm = (appointment: AppointmentRow) => ({
+  $id: appointment.$id,
+  userId: appointment.userId,
+  patientId: getAppointmentPatientId(appointment.patient),
+  primaryPhysician: appointment.primaryPhysician,
+  reason: appointment.reason,
+  schedule:
+    appointment.schedule instanceof Date
+      ? appointment.schedule
+      : new Date(appointment.schedule),
+  status: appointment.status,
+  note: appointment.note ?? '',
 });
 
 /**
@@ -101,6 +130,25 @@ export const getPatientByUserId = async (userId: string) => {
     return patient ? parseStringify(parsePatientForAppointment(patient)) : null;
   } catch (error) {
     console.error('Error fetching patient by user ID:', error);
+    throw error;
+  }
+};
+
+export const getAppointmentById = async (appointmentId: string) => {
+  try {
+    const appointment = await tablesDB.getRow<AppointmentRow>({
+      databaseId: APPWRITE_DATABASE_ID!,
+      tableId: 'appointment',
+      rowId: appointmentId,
+    });
+
+    return parseStringify(parseAppointmentForForm(appointment));
+  } catch (error: unknown) {
+    if (error instanceof AppwriteException && error.code === 404) {
+      return null;
+    }
+
+    console.error('Error fetching appointment by ID:', error);
     throw error;
   }
 };
@@ -193,6 +241,48 @@ export const createAppointment = async (appointment: CreateAppointmentParams) =>
     return parseStringify(newAppointment);
   } catch (error) {
     console.error('Error creating appointment:', error);
+    throw error;
+  }
+};
+
+export const updateAppointment = async ({
+  appointmentId,
+  userId,
+  primaryPhysician,
+  reason,
+  schedule,
+  note,
+}: UpdateAppointmentParams) => {
+  try {
+    const existingAppointment = await tablesDB.getRow<AppointmentRow>({
+      databaseId: APPWRITE_DATABASE_ID!,
+      tableId: 'appointment',
+      rowId: appointmentId,
+    });
+
+    if (existingAppointment.userId !== userId) {
+      return null;
+    }
+
+    const updatedAppointment = await tablesDB.updateRow({
+      databaseId: APPWRITE_DATABASE_ID!,
+      tableId: 'appointment',
+      rowId: appointmentId,
+      data: {
+        primaryPhysician,
+        reason,
+        schedule,
+        note,
+      },
+    });
+
+    return parseStringify(updatedAppointment);
+  } catch (error: unknown) {
+    if (error instanceof AppwriteException && error.code === 404) {
+      return null;
+    }
+
+    console.error('Error updating appointment:', error);
     throw error;
   }
 };

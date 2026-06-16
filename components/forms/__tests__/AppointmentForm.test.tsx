@@ -4,7 +4,10 @@ import type React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import AppointmentForm from '../AppointmentForm';
-import { createAppointment } from '@/lib/actions/patient.actions';
+import {
+  createAppointment,
+  updateAppointment,
+} from '@/lib/actions/patient.actions';
 
 vi.mock('next/image', () => ({
   default: ({
@@ -18,9 +21,11 @@ vi.mock('next/image', () => ({
 
 vi.mock('@/lib/actions/patient.actions', () => ({
   createAppointment: vi.fn(),
+  updateAppointment: vi.fn(),
 }));
 
 const createAppointmentMock = vi.mocked(createAppointment);
+const updateAppointmentMock = vi.mocked(updateAppointment);
 
 const defaultProps = {
   userId: 'user-123',
@@ -31,6 +36,7 @@ const defaultProps = {
 describe('AppointmentForm', () => {
   beforeEach(() => {
     createAppointmentMock.mockReset();
+    updateAppointmentMock.mockReset();
   });
 
   it('renders appointment fields and submit control', () => {
@@ -111,6 +117,92 @@ describe('AppointmentForm', () => {
     expect(createAppointmentMock.mock.calls[0][0].schedule).toBeInstanceOf(Date);
     expect(
       await screen.findByText(/appointment request submitted/i),
+    ).toBeInTheDocument();
+  });
+
+  it('renders update mode with existing appointment values', () => {
+    render(
+      <AppointmentForm
+        {...defaultProps}
+        mode="update"
+        appointmentId="appointment-789"
+        initialValues={{
+          primaryPhysician: 'Dr. Adam Smith',
+          reason: 'Follow-up',
+          schedule: new Date('2026-12-20T12:00:00.000Z'),
+          note: 'Bring lab results',
+        }}
+      />,
+    );
+
+    expect(screen.getByRole('combobox', { name: /doctor/i })).toHaveTextContent(
+      'Dr. Adam Smith',
+    );
+    expect(screen.getByLabelText(/reason for appointment/i)).toHaveValue(
+      'Follow-up',
+    );
+    expect(screen.getByLabelText(/additional comments\/notes/i)).toHaveValue(
+      'Bring lab results',
+    );
+    expect(screen.getByLabelText(/expected appointment date/i)).toHaveValue(
+      '12/20/2026',
+    );
+    expect(
+      screen.getByRole('button', { name: /save changes/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('updates an appointment without overwriting status', async () => {
+    const user = userEvent.setup();
+    updateAppointmentMock.mockResolvedValue({ $id: 'appointment-789' });
+
+    render(
+      <AppointmentForm
+        {...defaultProps}
+        mode="update"
+        appointmentId="appointment-789"
+        initialValues={{
+          primaryPhysician: defaultProps.primaryPhysician,
+          reason: 'Original reason',
+          schedule: new Date('2026-12-20T12:00:00.000Z'),
+          note: 'Original note',
+        }}
+      />,
+    );
+
+    await user.clear(screen.getByLabelText(/reason for appointment/i));
+    await user.type(
+      screen.getByLabelText(/reason for appointment/i),
+      'Updated reason',
+    );
+    await user.clear(screen.getByLabelText(/additional comments\/notes/i));
+    await user.type(
+      screen.getByLabelText(/additional comments\/notes/i),
+      'Updated note',
+    );
+
+    await user.click(screen.getByRole('button', { name: /save changes/i }));
+
+    await waitFor(() => {
+      expect(updateAppointmentMock).toHaveBeenCalledTimes(1);
+    });
+
+    expect(createAppointmentMock).not.toHaveBeenCalled();
+    expect(updateAppointmentMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        appointmentId: 'appointment-789',
+        userId: defaultProps.userId,
+        primaryPhysician: defaultProps.primaryPhysician,
+        reason: 'Updated reason',
+        note: 'Updated note',
+      }),
+    );
+    expect(updateAppointmentMock.mock.calls[0][0]).not.toHaveProperty(
+      'status',
+    );
+    expect(updateAppointmentMock.mock.calls[0][0].schedule).toBeInstanceOf(Date);
+    expect(
+      await screen.findByText(/appointment request updated/i),
     ).toBeInTheDocument();
   });
 });

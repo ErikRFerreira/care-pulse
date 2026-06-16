@@ -1,4 +1,3 @@
-import type { Appointment } from './appwrite.types';
 import type { Status } from './common.types';
 
 export type CreateAppointmentParams = {
@@ -14,6 +13,8 @@ export type CreateAppointmentParams = {
 export type UpdateAppointmentParams = {
   appointmentId: string;
   userId: string;
-  appointment: Appointment;
-  type: string;
+  primaryPhysician: string;
+  reason: string;
+  schedule: Date;
+  note: string | undefined;
 };

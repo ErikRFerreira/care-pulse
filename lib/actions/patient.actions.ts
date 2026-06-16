@@ -1,7 +1,11 @@
 'use server';
 
-import type { CreateUserParams, RegisterUserParams } from '@/types';
-import { AppwriteException, ID, Query } from 'node-appwrite';
+import type {
+  CreateAppointmentParams,
+  CreateUserParams,
+  RegisterUserParams,
+} from '@/types';
+import { AppwriteException, ID, Query, type Models } from 'node-appwrite';
 import {
   APPWRITE_DATABASE_ID,
   NEXT_PUBLIC_APPWRITE_BUCKET_ID,
@@ -17,6 +21,19 @@ const parseUser = (user: CreateUserParams & { $id: string }) => ({
   name: user.name,
   email: user.email,
   phone: user.phone,
+});
+
+type PatientRow = Models.Row & {
+  userId: string;
+  primary_physician?: string;
+  primaryPhysician?: string;
+};
+
+const parsePatientForAppointment = (patient: PatientRow) => ({
+  $id: patient.$id,
+  userId: patient.userId,
+  primaryPhysician:
+    patient.primary_physician ?? patient.primaryPhysician ?? '',
 });
 
 /**
@@ -67,6 +84,23 @@ export const getUserById = async (userId: string) => {
       return null;
     }
 
+    throw error;
+  }
+};
+
+export const getPatientByUserId = async (userId: string) => {
+  try {
+    const patients = await tablesDB.listRows<PatientRow>({
+      databaseId: APPWRITE_DATABASE_ID!,
+      tableId: 'patient',
+      queries: [Query.equal('userId', userId)],
+    });
+
+    const patient = patients.rows[0];
+
+    return patient ? parseStringify(parsePatientForAppointment(patient)) : null;
+  } catch (error) {
+    console.error('Error fetching patient by user ID:', error);
     throw error;
   }
 };
@@ -135,6 +169,30 @@ export const registerPatient = async ({
     return parseStringify(newPatient);
   } catch (error) {
     console.error('Error registering patient:', error);
+    throw error;
+  }
+};
+
+export const createAppointment = async (appointment: CreateAppointmentParams) => {
+  try {
+    const newAppointment = await tablesDB.createRow({
+      databaseId: APPWRITE_DATABASE_ID!,
+      tableId: 'appointment',
+      rowId: ID.unique(),
+      data: {
+        userId: appointment.userId,
+        patient: appointment.patient,
+        primaryPhysician: appointment.primaryPhysician,
+        reason: appointment.reason,
+        schedule: appointment.schedule,
+        status: appointment.status,
+        note: appointment.note,
+      },
+    });
+
+    return parseStringify(newAppointment);
+  } catch (error) {
+    console.error('Error creating appointment:', error);
     throw error;
   }
 };

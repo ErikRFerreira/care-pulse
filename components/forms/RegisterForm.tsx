@@ -11,6 +11,7 @@ import SubmitButton from '@/components/SubmitButton';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { SelectGroup, SelectItem } from '@/components/ui/select';
+import { DOCTORS } from '@/lib/constants/doctors';
 import { cn } from '@/lib/utils';
 import {
   GENDER_OPTIONS,
@@ -20,25 +21,6 @@ import {
 import type { User } from '@/types';
 import { useRouter } from 'next/navigation';
 import { registerPatient } from '@/lib/actions/patient.actions';
-
-const DOCTORS = [
-  {
-    name: 'Dr. Adam Smith',
-    image: '/assets/images/dr-green.png',
-  },
-  {
-    name: 'Dr. Emily Johnson',
-    image: '/assets/images/dr-cameron.png',
-  },
-  {
-    name: 'Dr. Michael Lee',
-    image: '/assets/images/dr-lee.png',
-  },
-  {
-    name: 'Dr. Sarah Livingston',
-    image: '/assets/images/dr-livingston.png',
-  },
-];
 
 const IDENTIFICATION_TYPES = [
   'Birth Certificate',

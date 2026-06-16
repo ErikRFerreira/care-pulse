@@ -18,6 +18,7 @@ import {
   appointmentFormSchema,
   type AppointmentFormValues,
 } from '@/lib/validation/appointment.schemas';
+import { useRouter } from 'next/navigation';
 
 type Props = {
   userId: string;
@@ -47,6 +48,7 @@ function AppointmentForm({
   );
   const isUpdateMode = mode === 'update';
   const appointmentMinDate = new Date();
+  const router = useRouter();
 
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentFormSchema),
@@ -73,6 +75,7 @@ function AppointmentForm({
         const updatedAppointment = await updateAppointment({
           appointmentId,
           userId: values.userId,
+          patientId: values.patient,
           primaryPhysician: values.primaryPhysician,
           reason: values.reason,
           schedule: values.schedule,
@@ -84,9 +87,11 @@ function AppointmentForm({
           return;
         }
 
-        setSubmissionMessage('Appointment request updated.');
+        router.push(
+          `/patients/${userId}/appointments/${updatedAppointment.$id}/success?action=updated`,
+        );
       } else {
-        await createAppointment({
+        const appointment = await createAppointment({
           ...values,
           note: values.note,
           status: 'pending',
@@ -97,7 +102,12 @@ function AppointmentForm({
           schedule: undefined,
           note: '',
         });
-        setSubmissionMessage('Appointment request submitted.');
+
+        if (appointment) {
+          router.push(
+            `/patients/${userId}/appointments/${appointment.$id}/success?action=created`,
+          );
+        }
       }
     } catch (error) {
       console.error('Error submitting appointment:', error);

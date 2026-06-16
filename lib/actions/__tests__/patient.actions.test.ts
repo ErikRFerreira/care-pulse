@@ -182,9 +182,9 @@ describe('patient actions', () => {
   it('returns appointment data shaped for the edit form', async () => {
     appwriteMocks.getRow.mockResolvedValue({
       $id: 'appointment-789',
-      userId: 'user-123',
       patient: {
         $id: 'patient-456',
+        userId: 'user-123',
       },
       primaryPhysician: 'Dr. Michael Lee',
       reason: 'Follow-up',

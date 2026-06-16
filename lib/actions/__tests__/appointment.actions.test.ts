@@ -48,7 +48,6 @@ describe('appointment actions', () => {
     const schedule = new Date('2026-12-20T12:00:00.000Z');
     appwriteMocks.createRow.mockResolvedValue({
       $id: 'appointment-789',
-      userId: 'user-123',
     });
 
     await expect(
@@ -63,7 +62,6 @@ describe('appointment actions', () => {
       }),
     ).resolves.toEqual({
       $id: 'appointment-789',
-      userId: 'user-123',
     });
 
     expect(appwriteMocks.createRow).toHaveBeenCalledWith({
@@ -71,7 +69,6 @@ describe('appointment actions', () => {
       tableId: 'appointment',
       rowId: 'unique-id',
       data: {
-        userId: 'user-123',
         patient: 'patient-456',
         primaryPhysician: 'Dr. Michael Lee',
         reason: 'Annual checkup',
@@ -85,8 +82,10 @@ describe('appointment actions', () => {
   it('does not update an appointment owned by another user', async () => {
     appwriteMocks.getRow.mockResolvedValue({
       $id: 'appointment-789',
-      userId: 'other-user',
-      patient: 'patient-456',
+      patient: {
+        $id: 'other-patient',
+        userId: 'other-user',
+      },
       primaryPhysician: 'Dr. Michael Lee',
       reason: 'Follow-up',
       schedule: '2026-12-20T12:00:00.000Z',
@@ -97,6 +96,7 @@ describe('appointment actions', () => {
     const result = await updateAppointment({
       appointmentId: 'appointment-789',
       userId: 'user-123',
+      patientId: 'patient-456',
       primaryPhysician: 'Dr. Adam Smith',
       reason: 'Updated reason',
       schedule: new Date('2026-12-21T12:00:00.000Z'),
@@ -111,7 +111,6 @@ describe('appointment actions', () => {
     const schedule = new Date('2026-12-21T12:00:00.000Z');
     appwriteMocks.getRow.mockResolvedValue({
       $id: 'appointment-789',
-      userId: 'user-123',
       patient: 'patient-456',
       primaryPhysician: 'Dr. Michael Lee',
       reason: 'Follow-up',
@@ -124,6 +123,7 @@ describe('appointment actions', () => {
     await updateAppointment({
       appointmentId: 'appointment-789',
       userId: 'user-123',
+      patientId: 'patient-456',
       primaryPhysician: 'Dr. Adam Smith',
       reason: 'Updated reason',
       schedule,
@@ -154,6 +154,7 @@ describe('appointment actions', () => {
     const result = await updateAppointment({
       appointmentId: 'missing-appointment',
       userId: 'user-123',
+      patientId: 'patient-456',
       primaryPhysician: 'Dr. Adam Smith',
       reason: 'Updated reason',
       schedule: new Date('2026-12-21T12:00:00.000Z'),

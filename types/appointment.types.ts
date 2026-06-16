@@ -15,6 +15,7 @@ export type CreateAppointmentParams = {
 export type UpdateAppointmentParams = {
   appointmentId: string;
   userId: string;
+  patientId: string;
   primaryPhysician: string;
   reason: string;
   schedule: Date;
@@ -22,7 +23,7 @@ export type UpdateAppointmentParams = {
 };
 
 export type AppointmentRow = Models.Row & {
-  userId: string;
+  userId?: string;
   patient: string | PatientRow;
   primaryPhysician: string;
   reason: string;

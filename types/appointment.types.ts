@@ -1,4 +1,6 @@
+import { Models } from 'node-appwrite';
 import type { Status } from './common.types';
+import { PatientRow } from './patient.types';
 
 export type CreateAppointmentParams = {
   userId: string;
@@ -17,4 +19,14 @@ export type UpdateAppointmentParams = {
   reason: string;
   schedule: Date;
   note: string | undefined;
+};
+
+export type AppointmentRow = Models.Row & {
+  userId: string;
+  patient: string | PatientRow;
+  primaryPhysician: string;
+  reason: string;
+  schedule: string | Date;
+  status: Status;
+  note?: string;
 };

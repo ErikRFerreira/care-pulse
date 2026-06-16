@@ -7,7 +7,7 @@ import AppointmentForm from '../AppointmentForm';
 import {
   createAppointment,
   updateAppointment,
-} from '@/lib/actions/patient.actions';
+} from '@/lib/actions/appointment.actions';
 
 vi.mock('next/image', () => ({
   default: ({
@@ -19,7 +19,7 @@ vi.mock('next/image', () => ({
   ),
 }));
 
-vi.mock('@/lib/actions/patient.actions', () => ({
+vi.mock('@/lib/actions/appointment.actions', () => ({
   createAppointment: vi.fn(),
   updateAppointment: vi.fn(),
 }));

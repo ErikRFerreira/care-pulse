@@ -1,3 +1,4 @@
+import { Models } from 'node-appwrite';
 import type { Gender } from './common.types';
 
 export interface CreateUserParams {
@@ -30,3 +31,9 @@ export interface RegisterUserParams extends CreateUserParams {
   identificationDocument?: FormData;
   privacyConsent: boolean;
 }
+
+export type PatientRow = Models.Row & {
+  userId: string;
+  primary_physician?: string;
+  primaryPhysician?: string;
+};

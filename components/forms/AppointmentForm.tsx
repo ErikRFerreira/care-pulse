@@ -12,7 +12,7 @@ import { SelectGroup, SelectItem } from '@/components/ui/select';
 import {
   createAppointment,
   updateAppointment,
-} from '@/lib/actions/patient.actions';
+} from '@/lib/actions/appointment.actions';
 import { DOCTORS } from '@/lib/constants/doctors';
 import {
   appointmentFormSchema,

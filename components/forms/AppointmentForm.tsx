@@ -9,7 +9,10 @@ import CustomFormField, { FormFieldType } from '@/components/CustomFormField';
 import SubmitButton from '@/components/SubmitButton';
 import { Form } from '@/components/ui/form';
 import { SelectGroup, SelectItem } from '@/components/ui/select';
-import { createAppointment } from '@/lib/actions/patient.actions';
+import {
+  createAppointment,
+  updateAppointment,
+} from '@/lib/actions/patient.actions';
 import { DOCTORS } from '@/lib/constants/doctors';
 import {
   appointmentFormSchema,
@@ -20,25 +23,40 @@ type Props = {
   userId: string;
   patientId: string;
   primaryPhysician: string;
+  mode?: 'create' | 'update';
+  appointmentId?: string;
+  initialValues?: Partial<
+    Pick<
+      AppointmentFormValues,
+      'primaryPhysician' | 'reason' | 'schedule' | 'note'
+    >
+  >;
 };
 
-const today = new Date();
-
-function AppointmentForm({ userId, patientId, primaryPhysician }: Props) {
+function AppointmentForm({
+  userId,
+  patientId,
+  primaryPhysician,
+  mode = 'create',
+  appointmentId,
+  initialValues,
+}: Props) {
   const [isLoading, setIsLoading] = useState(false);
   const [submissionMessage, setSubmissionMessage] = useState<string | null>(
     null,
   );
+  const isUpdateMode = mode === 'update';
+  const appointmentMinDate = new Date();
 
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentFormSchema),
     defaultValues: {
       userId,
       patient: patientId,
-      primaryPhysician,
-      reason: '',
-      schedule: undefined,
-      note: '',
+      primaryPhysician: initialValues?.primaryPhysician ?? primaryPhysician,
+      reason: initialValues?.reason ?? '',
+      schedule: initialValues?.schedule,
+      note: initialValues?.note ?? '',
     },
   });
 
@@ -47,21 +65,47 @@ function AppointmentForm({ userId, patientId, primaryPhysician }: Props) {
     setSubmissionMessage(null);
 
     try {
-      await createAppointment({
-        ...values,
-        note: values.note,
-        status: 'pending',
-      });
-      form.reset({
-        ...values,
-        reason: '',
-        schedule: undefined,
-        note: '',
-      });
-      setSubmissionMessage('Appointment request submitted.');
+      if (isUpdateMode) {
+        if (!appointmentId) {
+          throw new Error('Appointment ID is required for update mode.');
+        }
+
+        const updatedAppointment = await updateAppointment({
+          appointmentId,
+          userId: values.userId,
+          primaryPhysician: values.primaryPhysician,
+          reason: values.reason,
+          schedule: values.schedule,
+          note: values.note,
+        });
+
+        if (!updatedAppointment) {
+          setSubmissionMessage('Unable to update appointment request.');
+          return;
+        }
+
+        setSubmissionMessage('Appointment request updated.');
+      } else {
+        await createAppointment({
+          ...values,
+          note: values.note,
+          status: 'pending',
+        });
+        form.reset({
+          ...values,
+          reason: '',
+          schedule: undefined,
+          note: '',
+        });
+        setSubmissionMessage('Appointment request submitted.');
+      }
     } catch (error) {
-      console.error('Error creating appointment:', error);
-      setSubmissionMessage('Unable to submit appointment request.');
+      console.error('Error submitting appointment:', error);
+      setSubmissionMessage(
+        isUpdateMode
+          ? 'Unable to update appointment request.'
+          : 'Unable to submit appointment request.',
+      );
     } finally {
       setIsLoading(false);
     }
@@ -74,9 +118,14 @@ function AppointmentForm({ userId, patientId, primaryPhysician }: Props) {
         className="flex flex-1 flex-col gap-6"
       >
         <section className="flex flex-col gap-2">
-          <h2 className="header text-light-200">Hey there {'\u{1F44B}'}</h2>
+          <h2 className="header text-light-200">
+            {isUpdateMode ? 'Update appointment' : 'Hey there'}{' '}
+            {!isUpdateMode && '\u{1F44B}'}
+          </h2>
           <p className="text-16-regular text-dark-700">
-            Request a new appointment in 10 seconds
+            {isUpdateMode
+              ? 'Change the details for this appointment request'
+              : 'Request a new appointment in 10 seconds'}
           </p>
         </section>
 
@@ -129,7 +178,7 @@ function AppointmentForm({ userId, patientId, primaryPhysician }: Props) {
           name="schedule"
           label="Expected appointment date"
           placeholder="Select your appointment date"
-          minDate={today}
+          minDate={appointmentMinDate}
         />
 
         {submissionMessage && (
@@ -138,7 +187,9 @@ function AppointmentForm({ userId, patientId, primaryPhysician }: Props) {
           </p>
         )}
 
-        <SubmitButton isLoading={isLoading}>Submit and continue</SubmitButton>
+        <SubmitButton isLoading={isLoading}>
+          {isUpdateMode ? 'Save changes' : 'Submit and continue'}
+        </SubmitButton>
       </form>
     </Form>
   );

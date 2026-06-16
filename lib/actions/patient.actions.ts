@@ -1,13 +1,7 @@
 'use server';
 
-import type {
-  CreateAppointmentParams,
-  CreateUserParams,
-  RegisterUserParams,
-  Status,
-  UpdateAppointmentParams,
-} from '@/types';
-import { AppwriteException, ID, Query, type Models } from 'node-appwrite';
+import type { CreateUserParams, RegisterUserParams } from '@/types';
+import { AppwriteException, ID, Query } from 'node-appwrite';
 import {
   APPWRITE_DATABASE_ID,
   NEXT_PUBLIC_APPWRITE_BUCKET_ID,
@@ -17,7 +11,21 @@ import {
 } from '@/lib/appwrite.config';
 import { parseStringify } from '../utils';
 import { InputFile } from 'node-appwrite/file';
+import { PatientRow } from '@/types/patient.types';
+import { AppointmentRow } from '@/types/appointment.types';
 
+/**
+ * Parses a user object returned from the Appwrite database to extract relevant user information
+ * for use in patient-related operations, such as creating or retrieving patient records.
+ * This function ensures that the user data is formatted correctly for integration with patient data structures.
+ *
+ * @param user - An object containing the details of a user as returned from the Appwrite database,
+ * including their unique ID, name, email, and phone number. The function will extract and format this data to be compatible with patient-related operations.
+ * @returns - An object containing the user's unique ID, name, email, and phone number,
+ * formatted for use in patient-related operations.
+ * This parsed user data can then be integrated into patient creation or retrieval processes to ensure consistency
+ * and compatibility with the expected data structures.
+ */
 const parseUser = (user: CreateUserParams & { $id: string }) => ({
   $id: user.$id,
   name: user.name,
@@ -25,32 +33,42 @@ const parseUser = (user: CreateUserParams & { $id: string }) => ({
   phone: user.phone,
 });
 
-type PatientRow = Models.Row & {
-  userId: string;
-  primary_physician?: string;
-  primaryPhysician?: string;
-};
-
-type AppointmentRow = Models.Row & {
-  userId: string;
-  patient: string | PatientRow;
-  primaryPhysician: string;
-  reason: string;
-  schedule: string | Date;
-  status: Status;
-  note?: string;
-};
-
+/**
+ * Parses a PatientRow object to extract relevant patient information for use in appointment-related operations,
+ * such as creating or updating appointments.
+ * This function ensures that the patient data is formatted correctly for integration with appointment data structures.
+ *
+ * @param patient - A PatientRow object containing detailed information about a patient,
+ * including their unique ID, user ID, and primary physician information. The function will extract and format this data to be compatible with appointment-related operations.
+ * @returns - An object containing the patient's unique ID, user ID, and primary physician information,
+ * formatted for use in appointment-related operations. This parsed patient data can then be integrated into appointment creation or update processes to ensure consistency and compatibility with the expected data structures.
+ */
 const parsePatientForAppointment = (patient: PatientRow) => ({
   $id: patient.$id,
   userId: patient.userId,
-  primaryPhysician:
-    patient.primary_physician ?? patient.primaryPhysician ?? '',
+  primaryPhysician: patient.primary_physician ?? patient.primaryPhysician ?? '',
 });
 
+/**
+ * Retrieves the patient ID from an appointment's patient field,
+ * which can be either a string (patient ID) or a PatientRow object.
+ *
+ * @param patient - The patient field from an appointment, which can be a string representing the patient ID
+ * or a PatientRow object containing patient details.
+ * @returns - The patient ID as a string, extracted from the patient field regardless of its original type.
+ */
 const getAppointmentPatientId = (patient: AppointmentRow['patient']) =>
   typeof patient === 'string' ? patient : patient.$id;
 
+/**
+ * Creates a new appointment in the Appwrite database with the provided appointment details.
+ *
+ * @param appointment - An object containing the details of the appointment to be created,
+ * including user ID, patient information, primary physician, reason for the appointment, schedule, status,
+ * and any additional notes.
+ * @returns - A promise that resolves to the created appointment object if the operation is successful,
+ * or throws an error if there is an issue with the database operation.
+ */
 const parseAppointmentForForm = (appointment: AppointmentRow) => ({
   $id: appointment.$id,
   userId: appointment.userId,
@@ -71,7 +89,8 @@ const parseAppointmentForForm = (appointment: AppointmentRow) => ({
  *
  * @param user - An object containing the name, email, and phone number of the user to be created.
  * @returns - A promise that resolves to the created or existing user object, or null if no user is found.
- * @throws - Throws an error if there is an issue with the database operation, other than a conflict (409) or not found (404) error.
+ * @throws - Throws an error if there is an issue with the database operation, other than a conflict (409)
+ * or not found (404) error.
  */
 export const createUser = async (user: CreateUserParams) => {
   try {
@@ -117,6 +136,13 @@ export const getUserById = async (userId: string) => {
   }
 };
 
+/**
+ * Retrieves patient information associated with a specific user ID from the Appwrite database.
+ *
+ * @param userId - The unique ID of the user whose patient information is to be retrieved.
+ * @returns - A promise that resolves to the patient object if found, or null if no patient is found for the given user ID.
+ * @throws - Throws an error if there is an issue with the database operation.
+ */
 export const getPatientByUserId = async (userId: string) => {
   try {
     const patients = await tablesDB.listRows<PatientRow>({
@@ -134,6 +160,13 @@ export const getPatientByUserId = async (userId: string) => {
   }
 };
 
+/**
+ * Retrieves an appointment from the Appwrite database by its unique ID.
+ *
+ * @param appointmentId - The unique ID of the appointment to be retrieved.
+ * @returns - A promise that resolves to the appointment object if found, or null if no appointment is found with the given ID.
+ * @throws - Throws an error if there is an issue with the database operation, other than a not found (404) error.
+ */
 export const getAppointmentById = async (appointmentId: string) => {
   try {
     const appointment = await tablesDB.getRow<AppointmentRow>({
@@ -156,8 +189,10 @@ export const getAppointmentById = async (appointmentId: string) => {
 /**
  * Registers a patient by creating a new user in the Appwrite database and storing additional patient information.
  *
- * @param param0 - An object containing the registration details of the patient, including personal information, medical history, and insurance details.
- * @return - A promise that resolves to the registered patient object if the registration is successful, or null if the registration fails.
+ * @param param0 - An object containing the registration details of the patient, including personal information,
+ * medical history, and insurance details.
+ * @return - A promise that resolves to the registered patient object if the registration is successful,
+ * or null if the registration fails.
  * @throws - Throws an error if there is an issue with the database operation during registration.
  */
 export const registerPatient = async ({
@@ -217,72 +252,6 @@ export const registerPatient = async ({
     return parseStringify(newPatient);
   } catch (error) {
     console.error('Error registering patient:', error);
-    throw error;
-  }
-};
-
-export const createAppointment = async (appointment: CreateAppointmentParams) => {
-  try {
-    const newAppointment = await tablesDB.createRow({
-      databaseId: APPWRITE_DATABASE_ID!,
-      tableId: 'appointment',
-      rowId: ID.unique(),
-      data: {
-        userId: appointment.userId,
-        patient: appointment.patient,
-        primaryPhysician: appointment.primaryPhysician,
-        reason: appointment.reason,
-        schedule: appointment.schedule,
-        status: appointment.status,
-        note: appointment.note,
-      },
-    });
-
-    return parseStringify(newAppointment);
-  } catch (error) {
-    console.error('Error creating appointment:', error);
-    throw error;
-  }
-};
-
-export const updateAppointment = async ({
-  appointmentId,
-  userId,
-  primaryPhysician,
-  reason,
-  schedule,
-  note,
-}: UpdateAppointmentParams) => {
-  try {
-    const existingAppointment = await tablesDB.getRow<AppointmentRow>({
-      databaseId: APPWRITE_DATABASE_ID!,
-      tableId: 'appointment',
-      rowId: appointmentId,
-    });
-
-    if (existingAppointment.userId !== userId) {
-      return null;
-    }
-
-    const updatedAppointment = await tablesDB.updateRow({
-      databaseId: APPWRITE_DATABASE_ID!,
-      tableId: 'appointment',
-      rowId: appointmentId,
-      data: {
-        primaryPhysician,
-        reason,
-        schedule,
-        note,
-      },
-    });
-
-    return parseStringify(updatedAppointment);
-  } catch (error: unknown) {
-    if (error instanceof AppwriteException && error.code === 404) {
-      return null;
-    }
-
-    console.error('Error updating appointment:', error);
     throw error;
   }
 };

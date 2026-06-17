@@ -9,10 +9,7 @@ import { registerPatient } from '@/lib/actions/patient.actions';
 import type { User } from '@/types';
 
 vi.mock('next/image', () => ({
-  default: ({
-    alt,
-    ...props
-  }: React.ImgHTMLAttributes<HTMLImageElement>) => (
+  default: ({ alt, ...props }: React.ImgHTMLAttributes<HTMLImageElement>) => (
     // eslint-disable-next-line @next/next/no-img-element
     <img alt={alt ?? ''} {...props} />
   ),
@@ -63,9 +60,7 @@ describe('RegisterForm', () => {
     expect(screen.getByText(/consent and privacy/i)).toBeInTheDocument();
 
     expect(screen.getByLabelText(/full name/i)).toHaveValue(testUser.name);
-    expect(screen.getByLabelText(/email address/i)).toHaveValue(
-      testUser.email,
-    );
+    expect(screen.getByLabelText(/email address/i)).toHaveValue(testUser.email);
     expect(screen.getByLabelText(/^phone number$/i)).toHaveValue(
       '+1 555 123 4567',
     );
@@ -102,10 +97,7 @@ describe('RegisterForm', () => {
       screen.getByLabelText(/emergency phone number/i),
       '+15557654321',
     );
-    await user.type(
-      screen.getByLabelText(/insurance provider/i),
-      'BlueCross',
-    );
+    await user.type(screen.getByLabelText(/insurance provider/i), 'BlueCross');
     await user.type(
       screen.getByLabelText(/insurance policy number/i),
       'ABC1234567',
@@ -123,9 +115,9 @@ describe('RegisterForm', () => {
       file,
     );
 
-    const consentSection = screen.getByText(/consent and privacy/i).closest(
-      'section',
-    );
+    const consentSection = screen
+      .getByText(/consent and privacy/i)
+      .closest('section');
     expect(consentSection).not.toBeNull();
 
     const consentCheckboxes = within(consentSection!).getAllByRole('checkbox');

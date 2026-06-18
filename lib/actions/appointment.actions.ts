@@ -1,7 +1,7 @@
 'use server';
 
 import { CreateAppointmentParams, UpdateAppointmentParams } from '@/types';
-import { AppwriteException, ID } from 'node-appwrite';
+import { AppwriteException, ID, Query } from 'node-appwrite';
 
 import { APPWRITE_DATABASE_ID, tablesDB } from '../appwrite.config';
 import { parseStringify } from '../utils';
@@ -99,6 +99,54 @@ export const updateAppointment = async ({
     }
 
     console.error('Error updating appointment:', error);
+    throw error;
+  }
+};
+
+/**
+ * Fetches a list of recent appointments from the database, along with counts of appointments by status.
+ *
+ * @returns - An object containing the total count of appointments, counts of appointments by status, and the list of appointment documents.
+ * @throws - Throws an error if fetching the recent appointments fails.
+ *
+ */
+export const getRecentApppointmetList = async () => {
+  try {
+    const appointments = await tablesDB.listRows<AppointmentRow>({
+      databaseId: APPWRITE_DATABASE_ID!,
+      tableId: 'appointment',
+      queries: [Query.orderDesc('$createdAt')],
+    });
+
+    const initialCounts = {
+      scheduled: 0,
+      pending: 0,
+      cancelled: 0,
+    };
+
+    const counts = appointments.rows.reduce((acc, appointment) => {
+      switch (appointment.status) {
+        case 'scheduled':
+          acc.scheduled += 1;
+          break;
+        case 'pending':
+          acc.pending += 1;
+          break;
+        case 'cancelled':
+          acc.cancelled += 1;
+          break;
+      }
+      return acc;
+    }, initialCounts);
+
+    const data = {
+      totalCount: appointments.total,
+      ...counts,
+      documents: appointments.rows,
+    };
+    return data;
+  } catch (error) {
+    console.error('Error fetching recent appointments:', error);
     throw error;
   }
 };

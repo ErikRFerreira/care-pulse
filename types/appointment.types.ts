@@ -20,6 +20,8 @@ export type UpdateAppointmentParams = {
   reason: string;
   schedule: Date;
   note: string | undefined;
+  status?: Status;
+  cancellationReason?: string | null;
 };
 
 export type AppointmentRow = Models.Row & {
@@ -30,4 +32,9 @@ export type AppointmentRow = Models.Row & {
   schedule: string | Date;
   status: Status;
   note?: string;
+  cancellationReason?: string | null;
+};
+
+export type AppointmentListRow = Omit<AppointmentRow, 'patient'> & {
+  patient: string | Pick<PatientRow, '$id' | 'name' | 'userId'>;
 };

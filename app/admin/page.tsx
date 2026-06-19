@@ -10,6 +10,7 @@ async function Admin() {
   await connection();
 
   const appointments = await getRecentApppointmetList();
+  console.log('Appointments data:', appointments);
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-14">

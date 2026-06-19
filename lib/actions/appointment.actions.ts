@@ -1,11 +1,15 @@
 'use server';
 
 import { CreateAppointmentParams, UpdateAppointmentParams } from '@/types';
+import { revalidatePath } from 'next/cache';
 import { AppwriteException, ID, Query } from 'node-appwrite';
 
 import { APPWRITE_DATABASE_ID, tablesDB } from '../appwrite.config';
 import { parseStringify } from '../utils';
-import { AppointmentRow } from '@/types/appointment.types';
+import {
+  AppointmentListRow,
+  AppointmentRow,
+} from '@/types/appointment.types';
 
 const getAppointmentUserId = (appointment: AppointmentRow) =>
   appointment.userId ??
@@ -60,6 +64,8 @@ export const updateAppointment = async ({
   reason,
   schedule,
   note,
+  status,
+  cancellationReason,
 }: UpdateAppointmentParams) => {
   try {
     const existingAppointment = await tablesDB.getRow<AppointmentRow>({
@@ -89,8 +95,12 @@ export const updateAppointment = async ({
         reason,
         schedule,
         note,
+        ...(status ? { status } : {}),
+        ...(cancellationReason !== undefined ? { cancellationReason } : {}),
       },
     });
+
+    revalidatePath('/admin');
 
     return parseStringify(updatedAppointment);
   } catch (error: unknown) {
@@ -112,10 +122,13 @@ export const updateAppointment = async ({
  */
 export const getRecentApppointmetList = async () => {
   try {
-    const appointments = await tablesDB.listRows<AppointmentRow>({
+    const appointments = await tablesDB.listRows<AppointmentListRow>({
       databaseId: APPWRITE_DATABASE_ID!,
       tableId: 'appointment',
-      queries: [Query.orderDesc('$createdAt')],
+      queries: [
+        Query.orderDesc('$createdAt'),
+        Query.select(['*', 'patient.$id', 'patient.name', 'patient.userId']),
+      ],
     });
 
     const initialCounts = {

@@ -4,11 +4,12 @@ import { ColumnDef } from '@tanstack/react-table';
 import { Check, Hourglass, X } from 'lucide-react';
 import Image from 'next/image';
 
-import { Button } from '@/components/ui/button';
 import { DOCTORS } from '@/lib/constants/doctors';
 import { cn, formatDateTime } from '@/lib/utils';
-import type { AppointmentRow } from '@/types/appointment.types';
+import type { AppointmentListRow } from '@/types/appointment.types';
 import type { Status } from '@/types/common.types';
+import { AppointmentModal } from '../AppointmentModal';
+import { CancelAppointmentModal } from '../CancelAppointmentModal';
 
 const statusConfig: Record<
   Status,
@@ -43,7 +44,7 @@ const avatarColors = [
   'bg-fuchsia-300 text-black-900',
 ];
 
-const getPatientName = (appointment: AppointmentRow) =>
+const getPatientName = (appointment: AppointmentListRow) =>
   typeof appointment.patient === 'string'
     ? 'Unknown Patient'
     : appointment.patient.name;
@@ -59,15 +60,7 @@ const getInitials = (name: string) => {
   return initials || 'P';
 };
 
-const handleSchedule = (appointment: AppointmentRow) => {
-  console.log('Schedule appointment', appointment.$id);
-};
-
-const handleCancel = (appointment: AppointmentRow) => {
-  console.log('Cancel appointment', appointment.$id);
-};
-
-export const columns: ColumnDef<AppointmentRow>[] = [
+export const columns: ColumnDef<AppointmentListRow>[] = [
   {
     accessorKey: 'patient',
     header: 'Patient',
@@ -147,25 +140,19 @@ export const columns: ColumnDef<AppointmentRow>[] = [
   {
     id: 'actions',
     header: 'Actions',
-    cell: ({ row }) => (
-      <div className="flex items-center gap-4">
-        <Button
-          type="button"
-          variant="link"
-          className="h-auto p-0 text-14-medium text-green-500 hover:no-underline"
-          onClick={() => handleSchedule(row.original)}
-        >
-          Schedule
-        </Button>
-        <Button
-          type="button"
-          variant="link"
-          className="h-auto p-0 text-14-medium text-light-200 hover:no-underline"
-          onClick={() => handleCancel(row.original)}
-        >
-          Cancel
-        </Button>
-      </div>
-    ),
+    cell: ({ row }) => {
+      const appointment = row.original;
+
+      return (
+        <div className="flex items-center gap-4">
+          {appointment.status === 'pending' && (
+            <AppointmentModal appointment={appointment} />
+          )}
+          {appointment.status !== 'cancelled' && (
+            <CancelAppointmentModal appointment={appointment} />
+          )}
+        </div>
+      );
+    },
   },
 ];

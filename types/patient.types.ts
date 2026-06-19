@@ -34,6 +34,9 @@ export interface RegisterUserParams extends CreateUserParams {
 
 export type PatientRow = Models.Row & {
   userId: string;
+  name: string;
+  email: string;
+  phone: string;
   primary_physician?: string;
   primaryPhysician?: string;
 };

@@ -144,7 +144,8 @@ export const getRecentApppointmetList = async () => {
       ...counts,
       documents: appointments.rows,
     };
-    return data;
+
+    return parseStringify(data);
   } catch (error) {
     console.error('Error fetching recent appointments:', error);
     throw error;

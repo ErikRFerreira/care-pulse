@@ -1,15 +1,18 @@
-import DataTable from '@/components/table/DataTable';
 import StatCard from '@/components/StatCard';
+import { columns } from '@/components/table/columns';
+import { DataTable } from '@/components/table/DataTable';
 import { getRecentApppointmetList } from '@/lib/actions/appointment.actions';
 import Image from 'next/image';
 import Link from 'next/link';
-import Columns from '@/components/table/Columns';
+import { connection } from 'next/server';
 
 async function Admin() {
+  await connection();
+
   const appointments = await getRecentApppointmetList();
 
   return (
-    <div className="mx-auto flex max-w-7x flex-col space-y-14">
+    <div className="mx-auto flex max-w-7xl flex-col gap-14">
       <header className="admin-header">
         <Link href="/" className="cursor-pointer">
           <Image
@@ -23,8 +26,8 @@ async function Admin() {
       </header>
 
       <main className="admin-main">
-        <section className="w-full space-y-4 text-dark-700">
-          <h1 className="header ">Welcome</h1>
+        <section className="flex w-full flex-col gap-4 text-dark-700">
+          <h1 className="header">Welcome</h1>
           <p>Start managing your content here.</p>
         </section>
 
@@ -49,7 +52,7 @@ async function Admin() {
           />
         </section>
 
-        <DataTable columns={<Columns />} data={appointments.documents} />
+        <DataTable data={appointments.documents} columns={columns} />
       </main>
     </div>
   );
